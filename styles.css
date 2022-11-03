@@ -7,13 +7,81 @@ If your plugin does not need CSS, delete this file.
 
 */
 .auth-modal {
-    /* align-items: center; */
-    align-self: center;
-    align-content: center;
-    align-items: center;
-    justify-items: center;
-    justify-self: center;
-    justify-content: center;
-    text-align: center;
-    /* opacity: 0; */
+	/* align-items: center; */
+	align-self: center;
+	align-content: center;
+	align-items: center;
+	justify-items: center;
+	justify-self: center;
+	justify-content: center;
+	text-align: center;
+	/* opacity: 0; */
+}
+
+/**------------------------------------------------------------------------
+ **                            SETTINGS
+ *------------------------------------------------------------------------**/
+
+.mstodo-sync-settings .additional {
+	margin: 6px 12px;
+}
+.mstodo-sync-settings .additional > .setting-item {
+	border-top: 0;
+	padding-top: 9px;
+}
+
+.mstodo-sync-settings details > summary {
+	outline: none;
+	display: block !important;
+	list-style: none !important;
+	list-style-type: none !important;
+	min-height: 1rem;
+	border-top-left-radius: 0.1rem;
+	border-top-right-radius: 0.1rem;
+	cursor: pointer;
+	position: relative;
+}
+
+.mstodo-sync-settings details > summary::-webkit-details-marker,
+.mstodo-sync-settings details > summary::marker {
+	display: none !important;
+}
+
+.mstodo-sync-settings details > summary > .collapser {
+	position: absolute;
+	top: 50%;
+	right: 8px;
+	transform: translateY(-50%);
+	content: "";
+}
+
+.mstodo-sync-settings details > summary > .collapser > .handle {
+	transform: rotate(0deg);
+	transition: transform 0.25s;
+	background-color: currentColor;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+	-webkit-mask-image: var(--tasks-details-icon);
+	mask-image: var(--tasks-details-icon);
+	width: 20px;
+	height: 20px;
+}
+
+.mstodo-sync-settings details[open] > summary > .collapser > .handle {
+	transform: rotate(90deg);
+}
+
+.mstodo-sync-nested-settings .setting-item {
+	border: 0px;
+	padding-bottom: 0;
+}
+.mstodo-sync-nested-settings {
+	padding-bottom: 18px;
+}
+.mstodo-sync-nested-settings[open] .setting-item-heading,
+.mstodo-sync-nested-settings:not(details) .setting-item-heading {
+	border-top: 0px;
+	border-bottom: 1px solid var(--background-modifier-border);
 }

@@ -1,0 +1,136 @@
+[
+	{
+		"text": "PluginTitle",
+		"level": "h1",
+		"class": "",
+		"open": true,
+		"notice": {
+			"class": "",
+			"text": "PluginDescription",
+			"html": ""
+		},
+		"settings": []
+	},
+	{
+		"text": "Microsoft To Do Settings",
+		"level": "h2",
+		"class": "",
+		"open": true,
+		"notice": null,
+		"settings": [
+			{
+				"name": "TodoDefaultListName",
+				"description": "TodoDefaultListNameDescription",
+				"type": "text",
+				"initialValue": "",
+				"placeholder": "",
+				"settingName": "todoListSync_listName",
+				"featureFlag": "",
+				"notice": null
+			}
+		]
+	},
+	{
+		"text": "Settings_Uptimer",
+		"level": "h2",
+		"class": "",
+		"open": true,
+		"notice": null,
+		"settings": [
+			{
+				"name": "Settings_Uptimer_UpTimerEmail",
+				"description": "",
+				"type": "text",
+				"initialValue": "",
+				"placeholder": "",
+				"settingName": "uptimer_email",
+				"featureFlag": "",
+				"notice": null
+			},
+			{
+				"name": "Settings_Uptimer_UpTimerPassword",
+				"description": "",
+				"type": "text",
+				"initialValue": "",
+				"placeholder": "",
+				"settingName": "uptimer_password",
+				"featureFlag": "",
+				"notice": null
+			}
+		]
+	},
+	{
+		"text": "Settings_JournalFormatting",
+		"level": "h2",
+		"class": "",
+		"open": true,
+		"notice": null,
+		"settings": [
+			{
+				"name": "Settings_JournalFormatting_PeriodicNotes",
+				"description": "",
+				"type": "checkbox",
+				"initialValue": "",
+				"placeholder": "",
+				"settingName": "diary_stayWithPN",
+				"featureFlag": "",
+				"notice": null
+			},
+			{
+				"name": "Settings_JournalFormatting_DateFormat",
+				"description": "Settings_JournalFormatting_DateFormatDescription",
+				"type": "text",
+				"initialValue": "",
+				"placeholder": "",
+				"settingName": "diary_format",
+				"featureFlag": "",
+				"notice": null
+			},
+			{
+				"name": "Settings_JournalFormatting_Folder",
+				"description": "Settings_JournalFormatting_FolderDescription",
+				"type": "text",
+				"initialValue": "",
+				"placeholder": "",
+				"settingName": "diary_folder",
+				"featureFlag": "",
+				"notice": null
+			}
+		]
+	},
+	{
+		"text": "Optional or in development features",
+		"level": "h3",
+		"class": "",
+		"open": false,
+		"notice": {
+			"class": "",
+			"text": "The following features are in development or optional, stability is indicated next to the feature. While we try to make sure there is good test coverage and validation for every change there is always a chance of bugs.",
+			"html": ""
+		},
+		"settings": [
+			{
+				"name": "",
+				"description": "",
+				"type": "function",
+				"initialValue": "",
+				"placeholder": "",
+				"settingName": "insertFeatureFlags",
+				"featureFlag": "",
+				"notice": null
+			}
+		]
+	},
+	{
+		"text": "Documentation and Support",
+		"level": "h3",
+		"class": "",
+		"open": true,
+		"notice": {
+			"class": "",
+			"text": "",
+			"html": "<p>If you need help with this plugin, please check out the <a href='https://schemar.github.io/obsidian-tasks/'>Tasks documentation</a>. Click on issues below if you find something that the documentation does not explain or if you find something now working as expected.</p> <a href='https://github.com/sytone/obsidian-tasks-x/issues'><img alt='GitHub issues' src='https://img.shields.io/github/issues/sytone/obsidian-tasks-x?style=for-the-badge'></a> <img alt='GitHub package.json version' src='https://img.shields.io/github/package-json/v/sytone/obsidian-tasks-x?style=for-the-badge'> <img alt='GitHub all releases' src='https://img.shields.io/github/downloads/sytone/obsidian-tasks-x/total?style=for-the-badge'>"
+		},
+		"settings": []
+	}
+]
