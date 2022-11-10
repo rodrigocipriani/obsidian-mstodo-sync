@@ -50,5 +50,11 @@
 	"Settings_Todo_Display_AddCreatedAtOnReplaceDescription": "If you select to replace the task and this is enabled 'Created at {Time Format}'",
 	"EditorMenu_OpenToDo": "Open To Do",
 	"Settings_Todo_OpenUsingApplicationProtocolTitle": "Open with application protocol?",
-	"Settings_Todo_OpenUsingApplicationProtocolDescription": "If this is set to true it will open the todo in the locally installed application, set it to off if you want to open the todo in the browser."
+	"Settings_Todo_OpenUsingApplicationProtocolDescription": "If this is set to true it will open the todo in the locally installed application, set it to off if you want to open the todo in the browser.",
+	"Settings_Todo_Display_Importance_HighName": "High Priority Indicator",
+	"Settings_Todo_Display_Importance_HighDescription": "Used to display and create/update To Do items if found on line.",
+	"Settings_Todo_Display_Importance_NormalName": "Medium Priority Indicator",
+	"Settings_Todo_Display_Importance_NormalDescription": "Used to display and create/update To Do items if found on line.",
+	"Settings_Todo_Display_Importance_LowName": "Low Priority Indicator",
+	"Settings_Todo_Display_Importance_LowDescription": "Used to display and create/update To Do items if found on line."
 }

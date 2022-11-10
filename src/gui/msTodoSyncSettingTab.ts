@@ -24,6 +24,15 @@ export interface MsTodoSyncSettings {
 	displayOptions_ReplaceAddCreatedAt: boolean;
 	displayOptions_ReplacementFormat: string;
 
+	// importance
+	// The importance of the task. Possible values
+	// are: low, normal, high.
+	// By default it is normal and the absence of a
+	// indicator will also mean normal.
+	displayOptions_TaskImportance_Low: string;
+	displayOptions_TaskImportance_Normal: string;
+	displayOptions_TaskImportance_High: string;
+
 	// Microsoft To Do open handler.
 	todo_OpenUsingApplicationProtocol: boolean;
 
@@ -53,6 +62,11 @@ export const DEFAULT_SETTINGS: MsTodoSyncSettings = {
 	displayOptions_TaskBodyPrefix: '💡',
 	displayOptions_ReplaceAddCreatedAt: false,
 	displayOptions_ReplacementFormat: '- [ ] {{TASK}}',
+
+	displayOptions_TaskImportance_Low: '🔽',
+	displayOptions_TaskImportance_Normal: '🔼',
+	displayOptions_TaskImportance_High: '⏫',
+
 	todo_OpenUsingApplicationProtocol: true,
 
 	loggingOptions: {
@@ -72,6 +86,36 @@ export class MsTodoSyncSettingTab extends PluginSettingTab {
 		super(app, plugin);
 		this.plugin = plugin;
 		this.settings = plugin.settings;
+	}
+
+	/**
+	 * Creates a setting entry in the settings form
+	 * for text based properties. If there is a update
+	 * it will save the new value.
+	 *
+	 * @param {HTMLElement} containerEl
+	 * @param {string} title
+	 * @param {string} description
+	 * @param {string} currentValue
+	 * @param {(value: string) => any} changeCallback
+	 * @memberof MsTodoSyncSettingTab
+	 */
+	addTextSetting(
+		containerEl: HTMLElement,
+		title: string,
+		description: string,
+		currentValue: string,
+		changeCallback: (value: string) => any,
+	): void {
+		new Setting(containerEl)
+			.setName(t(title))
+			.setDesc(t(description))
+			.addText((text) =>
+				text.setValue(currentValue).onChange(async (value) => {
+					changeCallback(value);
+					await this.plugin.saveSettings();
+				}),
+			);
 	}
 
 	display(): void {
@@ -153,6 +197,39 @@ export class MsTodoSyncSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}),
 			);
+
+		// Task Importance Indicators - High
+		this.addTextSetting(
+			containerEl,
+			'Settings_Todo_Display_Importance_HighName',
+			'Settings_Todo_Display_Importance_HighDescription',
+			this.settings.displayOptions_TaskImportance_High,
+			async (value) => {
+				this.settings.displayOptions_TaskImportance_High = value;
+			},
+		);
+
+		// Task Importance Indicators - Normal
+		this.addTextSetting(
+			containerEl,
+			'Settings_Todo_Display_Importance_NormalName',
+			'Settings_Todo_Display_Importance_NormalDescription',
+			this.settings.displayOptions_TaskImportance_Normal,
+			async (value) => {
+				this.settings.displayOptions_TaskImportance_Normal = value;
+			},
+		);
+
+		// Task Importance Indicators - Low
+		this.addTextSetting(
+			containerEl,
+			'Settings_Todo_Display_Importance_LowName',
+			'Settings_Todo_Display_Importance_LowDescription',
+			this.settings.displayOptions_TaskImportance_Low,
+			async (value) => {
+				this.settings.displayOptions_TaskImportance_Low = value;
+			},
+		);
 
 		containerEl.createEl('h2', { text: t('Settings_JournalFormatting') });
 		new Setting(containerEl).setName(t('Settings_JournalFormatting_PeriodicNotes')).addToggle((toggle) =>

@@ -1,5 +1,6 @@
 import { Editor, Notice } from 'obsidian';
 import { formatTask } from 'src/utils/formatter';
+import { ObsidianTodoTask } from 'src/model/ObsidianTodoTask';
 import MsTodoSync from '../main';
 import { TodoApi } from '../api/todoApi';
 import { MsTodoSyncSettings } from '../gui/msTodoSyncSettingTab';
@@ -35,7 +36,6 @@ export async function postTask(
 		return;
 	}
 	new Notice('创建待办中...', 3000);
-	const body = `${t('displayOptions_CreatedInFile')} [[${fileName}]]`;
 	const formatted = editor
 		.getSelection()
 		.replace(/(- \[ \] )|\*|^> |^#* |- /gm, '')
@@ -44,30 +44,25 @@ export async function postTask(
 	log('debug', formatted.join(' :: '));
 	Promise.all(
 		formatted.map(async (s) => {
-			const line = s.trim();
-			const regex = /\^(?!.*\^)([A-Za-z0-9]+)/gm;
-			const blocklistMatch = regex.exec(line);
-			if (blocklistMatch) {
-				const blocklink = blocklistMatch[1];
-				const taskId = plugin.settings.taskIdLookup[blocklink];
-				//FIXME If there's a 'Created at xxxx' replaced line,
-				// it's not enough to get a cleanTaskTitle after the next line.
-				const cleanTaskTitle = line.replace(`^${blocklink}`, '');
+			const todo = new ObsidianTodoTask(plugin, s, fileName ?? '');
 
-				console.log(blocklink);
-				console.log(taskId);
-				const updatedTask = await todoApi.updateTask(listId, taskId, cleanTaskTitle);
-				console.log(updatedTask);
-				return { line: cleanTaskTitle, index: blocklink };
+			// If there is a block link in the line, we will try to find
+			// the task id from the block link and update the task instead.
+			if (todo.hasBlockLink && todo.id) {
+				log('debug', `blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
+
+				const returnedTask = await todoApi.updateTaskFromToDo(listId, todo.id, todo);
+				log('debug', `blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
+				log('debug', `updated: ${returnedTask.id}`);
+
+				return { line: todo.title, index: todo.blockLink };
 			} else {
-				const newTask = await todoApi.createTask(listId, line, body);
-				plugin.settings.taskIdIndex = plugin.settings.taskIdIndex + 1;
-				const index = `${Math.random().toString(20).substring(2, 6)}${plugin.settings.taskIdIndex
-					.toString()
-					.padStart(5, '0')}`;
-				plugin.settings.taskIdLookup[index] = newTask.id === undefined ? '' : newTask.id;
-				await plugin.saveSettings();
-				return { line, index };
+				const returnedTask = await todoApi.createTaskFromToDo(listId, todo);
+
+				todo.cacheTaskId(returnedTask.id);
+				log('debug', `blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
+
+				return { line: todo.title, index: todo.blockLink };
 			}
 		}),
 	).then((res) => {

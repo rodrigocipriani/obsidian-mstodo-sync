@@ -1,7 +1,7 @@
 import * as msal from '@azure/msal-node';
 import * as msalCommon from '@azure/msal-common';
 import { Client } from '@microsoft/microsoft-graph-client';
-import { TodoTask, TodoTaskList } from '@microsoft/microsoft-graph-types';
+import { Importance, TodoTask, TodoTaskList } from '@microsoft/microsoft-graph-types';
 import { DataAdapter, Notice } from 'obsidian';
 import { MicrosoftAuthModal } from '../gui/microsoftAuthModal';
 export class TodoApi {
@@ -65,21 +65,91 @@ export class TodoApi {
 		const endpoint = `/me/todo/lists/${listId}/tasks/${taskId}`;
 		return (await this.client.api(endpoint).get()) as TodoTask;
 	}
-	async createTask(listId: string | undefined, title: string, body?: string): Promise<TodoTask> {
+
+	/*
+	{
+		"@odata.type": "#microsoft.graph.todoTask",
+		"id": "String (identifier)",
+		"body": {
+			"@odata.type": "microsoft.graph.itemBody"
+		},
+		"categories": ["string"],
+		"completedDateTime": {
+			"@odata.type": "microsoft.graph.dateTimeTimeZone"
+		},
+		"dueDateTime": {
+			"@odata.type": "microsoft.graph.dateTimeTimeZone"
+		},
+		"importance": "String", // low, normal, high
+		"isReminderOn": "Boolean",
+		"recurrence": {
+			"@odata.type": "microsoft.graph.patternedRecurrence"
+		},
+		"reminderDateTime": {
+			"@odata.type": "microsoft.graph.dateTimeTimeZone"
+		},
+		"status": "String",
+		"title": "String",
+		"createdDateTime": "String (timestamp)",
+		"lastModifiedDateTime": "String (timestamp)",
+		"bodyLastModifiedDateTime": "String (timestamp)"
+	}
+	*/
+	async createTask(listId: string | undefined, title: string, body?: string, importance?: string): Promise<TodoTask> {
 		const endpoint = `/me/todo/lists/${listId}/tasks`;
-		return await this.client.api(endpoint).post({
+		const toDo: TodoTask = this.getToDoTaskObject(title, body, importance);
+		return await this.client.api(endpoint).post(toDo);
+	}
+
+	async createTaskFromToDo(listId: string | undefined, toDo: TodoTask): Promise<TodoTask> {
+		const endpoint = `/me/todo/lists/${listId}/tasks`;
+		return await this.client.api(endpoint).post(toDo);
+	}
+
+	async updateTask(
+		listId: string | undefined,
+		taskId: string,
+		title: string,
+		body?: string,
+		importance?: string,
+	): Promise<TodoTask> {
+		const endpoint = `/me/todo/lists/${listId}/tasks/${taskId}`;
+		const toDo: TodoTask = this.getToDoTaskObject(title, body, importance);
+
+		return await this.client.api(endpoint).patch(toDo);
+	}
+
+	async updateTaskFromToDo(listId: string | undefined, taskId: string, toDo: TodoTask): Promise<TodoTask> {
+		const endpoint = `/me/todo/lists/${listId}/tasks/${taskId}`;
+		return await this.client.api(endpoint).patch(toDo);
+	}
+
+	/**
+	 * Takes a set of primitive values and returns a TodoTask object. This
+	 * is used in the create and update paths.
+	 *
+	 * @param {string} title
+	 * @param {string} [body]
+	 * @param {string} [importance]
+	 * @return {*}
+	 * @memberof TodoApi
+	 */
+	getToDoTaskObject(title: string, body?: string, importance?: string) {
+		const toDo: TodoTask = {
 			title: title,
-			body: {
+		};
+
+		if (body && body.length > 0) {
+			toDo.body = {
 				content: body,
 				contentType: 'text',
-			},
-		});
-	}
-	async updateTask(listId: string | undefined, taskId: string, title: string): Promise<TodoTask> {
-		const endpoint = `/me/todo/lists/${listId}/tasks/${taskId}`;
-		return await this.client.api(endpoint).patch({
-			title: title,
-		});
+			};
+		}
+
+		if (importance && importance.length > 0) {
+			toDo.importance = importance as Importance;
+		}
+		return toDo;
 	}
 }
 
