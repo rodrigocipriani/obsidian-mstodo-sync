@@ -61,7 +61,7 @@ export const DEFAULT_SETTINGS: MsTodoSyncSettings = {
 	displayOptions_TaskStartPrefix: '🛫',
 	displayOptions_TaskBodyPrefix: '💡',
 	displayOptions_ReplaceAddCreatedAt: false,
-	displayOptions_ReplacementFormat: '- [ ] {{TASK}}',
+	displayOptions_ReplacementFormat: '- [ ] {{TASK}} {{IMPORTANCE}}',
 
 	displayOptions_TaskImportance_Low: '🔽',
 	displayOptions_TaskImportance_Normal: '🔼',
@@ -71,7 +71,8 @@ export const DEFAULT_SETTINGS: MsTodoSyncSettings = {
 
 	loggingOptions: {
 		minLevels: {
-			'': 'info',
+			'': 'debug',
+			'mstodo-sync': 'debug',
 		},
 	},
 	taskIdLookup: { ['0000ABCD']: '0' },

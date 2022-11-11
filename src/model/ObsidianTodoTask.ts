@@ -15,7 +15,8 @@ import {
 import { MsTodoSyncSettings } from 'src/gui/msTodoSyncSettingTab';
 import MsTodoSync from './../main';
 import { t } from './../lib/lang';
-import { log } from './../lib/logging';
+import { logging } from './../lib/logging';
+import { IMPORTANCE_REGEX, TASK_REGEX } from './../constants';
 
 export class ObsidianTodoTask implements TodoTask {
 	id?: string;
@@ -79,6 +80,7 @@ export class ObsidianTodoTask implements TodoTask {
 	public fileName?: string;
 	private plugin: MsTodoSync;
 	private settings: MsTodoSyncSettings;
+	logger = logging.getLogger('mstodo-sync.ObsidianTodoTask');
 
 	/**
 	 *
@@ -90,6 +92,8 @@ export class ObsidianTodoTask implements TodoTask {
 
 		this.title = line.trim();
 
+		// This will strip out the block link if it exists as
+		// it is part of this plugin and not user specified.
 		this.checkForBlockLink(line);
 
 		this.checkForImportance(line);
@@ -98,6 +102,50 @@ export class ObsidianTodoTask implements TodoTask {
 			content: `${t('displayOptions_CreatedInFile')} [[${this.fileName}]]`,
 			contentType: 'text',
 		};
+	}
+
+	public getTodoTask(): TodoTask {
+		const toDo: TodoTask = {
+			title: this.title,
+		};
+
+		if (this.body && this.body.content && this.body.content.length > 0) {
+			toDo.body = this.body;
+		}
+
+		if (this.importance && this.importance.length > 0) {
+			toDo.importance = this.importance as Importance;
+		}
+		return toDo;
+	}
+
+	public getMarkdownTask(): string {
+		let output: string;
+		const format = this.settings.displayOptions_ReplacementFormat;
+		const priorityIndicator = this.getPriorityIndicator();
+
+		// eslint-disable-next-line prefer-const
+		output = format.replace(TASK_REGEX, this.title ?? '');
+
+		if (output.includes(priorityIndicator)) {
+			// Already in title, don't add it again and clear replacement tag.
+			output = output.replace(IMPORTANCE_REGEX, '');
+		} else {
+			output = output.replace(IMPORTANCE_REGEX, priorityIndicator);
+		}
+
+		if (this.settings.displayOptions_ReplaceAddCreatedAt) {
+			output = `${output} ${t('displayOptions_CreatedAtTime')} ${window
+				.moment()
+				.format(this.settings.displayOptions_TimeFormat)}`;
+		}
+
+		// Append blocklink at the end if it exists
+		if (this.hasBlockLink && this.blockLink) {
+			output = `${output} ^${this.blockLink}`;
+		}
+
+		return output;
 	}
 
 	private checkForImportance(line: string) {
@@ -109,6 +157,19 @@ export class ObsidianTodoTask implements TodoTask {
 
 		if (line.includes(this.settings.displayOptions_TaskImportance_High)) {
 			this.importance = 'high';
+		}
+	}
+
+	private getPriorityIndicator(): string {
+		switch (this.importance) {
+			case 'normal':
+				return this.settings.displayOptions_TaskImportance_Normal;
+			case 'low':
+				return this.settings.displayOptions_TaskImportance_Low;
+			case 'high':
+				return this.settings.displayOptions_TaskImportance_High;
+			default:
+				return '';
 		}
 	}
 
@@ -145,12 +206,17 @@ export class ObsidianTodoTask implements TodoTask {
 	 */
 	public async cacheTaskId(id?: string): Promise<void> {
 		this.settings.taskIdIndex = this.settings.taskIdIndex + 1;
+
 		const index = `${Math.random().toString(20).substring(2, 6)}${this.settings.taskIdIndex
 			.toString()
 			.padStart(5, '0')}`;
+		this.logger.debug(`id: ${id}, index: ${index}, taskIdIndex: ${this.settings.taskIdIndex}`);
+
 		this.settings.taskIdLookup[index] = id ?? '';
-		await this.plugin.saveSettings();
 		this.blockLink = index;
+		this.id = id;
+
+		await this.plugin.saveSettings();
 	}
 
 	/**

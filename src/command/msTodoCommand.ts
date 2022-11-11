@@ -1,11 +1,10 @@
 import { Editor, Notice } from 'obsidian';
-import { formatTask } from 'src/utils/formatter';
 import { ObsidianTodoTask } from 'src/model/ObsidianTodoTask';
 import MsTodoSync from '../main';
 import { TodoApi } from '../api/todoApi';
 import { MsTodoSyncSettings } from '../gui/msTodoSyncSettingTab';
 import { t } from './../lib/lang';
-import { log } from './../lib/logging';
+import { log, logging } from './../lib/logging';
 
 export function getTaskIdFromLine(line: string, plugin: MsTodoSync): string {
 	const regex = /\^(?!.*\^)([A-Za-z0-9]+)/gm;
@@ -27,6 +26,8 @@ export async function postTask(
 	plugin: MsTodoSync,
 	replace?: boolean,
 ) {
+	const logger = logging.getLogger('mstodo-sync.command.post');
+
 	if (!editor.somethingSelected()) {
 		new Notice('好像没有选中什么');
 		return;
@@ -49,21 +50,22 @@ export async function postTask(
 			// If there is a block link in the line, we will try to find
 			// the task id from the block link and update the task instead.
 			if (todo.hasBlockLink && todo.id) {
-				log('debug', `blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
+				logger.debug(`Updating Task: ${todo.title}`);
 
-				const returnedTask = await todoApi.updateTaskFromToDo(listId, todo.id, todo);
-				log('debug', `blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
-				log('debug', `updated: ${returnedTask.id}`);
-
-				return { line: todo.title, index: todo.blockLink };
+				const returnedTask = await todoApi.updateTaskFromToDo(listId, todo.id, todo.getTodoTask());
+				logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
+				logger.debug(`updated: ${returnedTask.id}`);
 			} else {
-				const returnedTask = await todoApi.createTaskFromToDo(listId, todo);
+				logger.debug(`Creating Task: ${todo.title}`);
 
+				const returnedTask = await todoApi.createTaskFromToDo(listId, todo.getTodoTask());
+
+				todo.status = returnedTask.status;
 				todo.cacheTaskId(returnedTask.id);
-				log('debug', `blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
-
-				return { line: todo.title, index: todo.blockLink };
+				logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`, todo);
 			}
+
+			return todo;
 		}),
 	).then((res) => {
 		new Notice('创建待办成功√');
@@ -71,15 +73,8 @@ export async function postTask(
 			editor.replaceSelection(
 				res
 					.map((i) => {
-						let createdAt = '';
-						const blocklink = `^${i.index}`;
-						const formattedTask = formatTask(plugin, i.line);
-						if (plugin.settings.displayOptions_ReplaceAddCreatedAt) {
-							createdAt = `${t('displayOptions_CreatedAtTime')} ${window
-								.moment()
-								.format(plugin.settings.displayOptions_TimeFormat)}`;
-						}
-						return `${formattedTask} ${createdAt} ${blocklink}`;
+						logger.debug('Processed blockLink', i.blockLink);
+						return i.getMarkdownTask();
 					})
 					.join('\n'),
 			);
