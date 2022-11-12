@@ -16,7 +16,7 @@ import { MsTodoSyncSettings } from 'src/gui/msTodoSyncSettingTab';
 import MsTodoSync from './../main';
 import { t } from './../lib/lang';
 import { logging } from './../lib/logging';
-import { IMPORTANCE_REGEX, TASK_REGEX } from './../constants';
+import { IMPORTANCE_REGEX, STATUS_SYMBOL_REGEX, TASK_REGEX } from './../constants';
 
 export class ObsidianTodoTask implements TodoTask {
 	id?: string;
@@ -91,10 +91,14 @@ export class ObsidianTodoTask implements TodoTask {
 		this.fileName = fileName;
 
 		this.title = line.trim();
+		this.logger.debug(`Creating: '${this.title}'`);
 
 		// This will strip out the block link if it exists as
 		// it is part of this plugin and not user specified.
 		this.checkForBlockLink(line);
+
+		// This will strip out the checkbox if in title.
+		this.checkForStatus(line);
 
 		this.checkForImportance(line);
 
@@ -102,6 +106,8 @@ export class ObsidianTodoTask implements TodoTask {
 			content: `${t('displayOptions_CreatedInFile')} [[${this.fileName}]]`,
 			contentType: 'text',
 		};
+
+		this.logger.debug(`Created: '${this.title}'`);
 	}
 
 	public getTodoTask(): TodoTask {
@@ -113,19 +119,50 @@ export class ObsidianTodoTask implements TodoTask {
 			toDo.body = this.body;
 		}
 
+		if (this.status && this.status.length > 0) {
+			toDo.status = this.status;
+		}
+
 		if (this.importance && this.importance.length > 0) {
 			toDo.importance = this.importance as Importance;
+		}
+
+		if (this.checklistItems && this.checklistItems.length > 0) {
+			toDo.checklistItems = this.checklistItems;
 		}
 		return toDo;
 	}
 
+	public setBody(body: string) {
+		this.body = {
+			content: body,
+			contentType: 'text',
+		};
+	}
+
+	public addChecklistItem(item: string) {
+		if (!this.checklistItems) {
+			this.checklistItems = [];
+		}
+
+		this.checklistItems.push({
+			displayName: item,
+		});
+	}
+
+	/**
+	 * Return the task as a well formed markdown task.
+	 *
+	 * @return {*}  {string}
+	 * @memberof ObsidianTodoTask
+	 */
 	public getMarkdownTask(): string {
 		let output: string;
 		const format = this.settings.displayOptions_ReplacementFormat;
 		const priorityIndicator = this.getPriorityIndicator();
 
 		// eslint-disable-next-line prefer-const
-		output = format.replace(TASK_REGEX, this.title ?? '');
+		output = format.replace(TASK_REGEX, this.title ?? '').replace(STATUS_SYMBOL_REGEX, this.getStatusIndicator());
 
 		if (output.includes(priorityIndicator)) {
 			// Already in title, don't add it again and clear replacement tag.
@@ -142,10 +179,22 @@ export class ObsidianTodoTask implements TodoTask {
 
 		// Append blocklink at the end if it exists
 		if (this.hasBlockLink && this.blockLink) {
-			output = `${output} ^${this.blockLink}`;
+			output = `${output.trim()} ^${this.blockLink}`;
 		}
 
 		return output;
+	}
+
+	private checkForStatus(line: string) {
+		const regex = /\[(.)\]/;
+
+		const m = regex.exec(line);
+		if (m && m.length > 0) {
+			this.status = m[1] === 'x' ? 'completed' : 'notStarted';
+			this.title = this.title?.replace(regex, '').trim();
+		} else {
+			this.status = 'notStarted';
+		}
 	}
 
 	private checkForImportance(line: string) {
@@ -173,6 +222,19 @@ export class ObsidianTodoTask implements TodoTask {
 		}
 	}
 
+	private getStatusIndicator(): string {
+		switch (this.status) {
+			case 'notStarted':
+				return this.settings.displayOptions_TaskStatus_NotStarted;
+			case 'inProgress':
+				return this.settings.displayOptions_TaskStatus_InProgress;
+			case 'completed':
+				return this.settings.displayOptions_TaskStatus_Completed;
+			default:
+				return ' ';
+		}
+	}
+
 	private checkForBlockLink(line: string) {
 		const blocklinkRegex = /\^(?!.*\^)([A-Za-z0-9]+)/gm;
 		const blocklinkMatch = blocklinkRegex.exec(line);
@@ -181,7 +243,7 @@ export class ObsidianTodoTask implements TodoTask {
 
 			//FIXME If there's a 'Created at xxxx' replaced line,
 			// it's not enough to get a cleanTaskTitle after the next line.
-			this.title = line.replace(`^${this.blockLink}`, '');
+			this.title = this.title?.replace(`^${this.blockLink}`, '');
 		}
 
 		if (this.hasBlockLink && this.blockLink) {
@@ -217,33 +279,5 @@ export class ObsidianTodoTask implements TodoTask {
 		this.id = id;
 
 		await this.plugin.saveSettings();
-	}
-
-	/**
-	 * Takes a set of primitive values and returns a TodoTask object. This
-	 * is used in the create and update paths.
-	 *
-	 * @param {string} title
-	 * @param {string} [body]
-	 * @param {string} [importance]
-	 * @return {*}
-	 * @memberof TodoApi
-	 */
-	getToDoTask(title: string, body?: string, importance?: string) {
-		const toDo: TodoTask = {
-			title: title,
-		};
-
-		if (body && body.length > 0) {
-			toDo.body = {
-				content: body,
-				contentType: 'text',
-			};
-		}
-
-		if (importance && importance.length > 0) {
-			toDo.importance = importance as Importance;
-		}
-		return toDo;
 	}
 }

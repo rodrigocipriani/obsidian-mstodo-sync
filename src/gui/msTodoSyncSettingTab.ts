@@ -33,6 +33,10 @@ export interface MsTodoSyncSettings {
 	displayOptions_TaskImportance_Normal: string;
 	displayOptions_TaskImportance_High: string;
 
+	displayOptions_TaskStatus_NotStarted: string;
+	displayOptions_TaskStatus_InProgress: string;
+	displayOptions_TaskStatus_Completed: string;
+
 	// Microsoft To Do open handler.
 	todo_OpenUsingApplicationProtocol: boolean;
 
@@ -61,11 +65,15 @@ export const DEFAULT_SETTINGS: MsTodoSyncSettings = {
 	displayOptions_TaskStartPrefix: '🛫',
 	displayOptions_TaskBodyPrefix: '💡',
 	displayOptions_ReplaceAddCreatedAt: false,
-	displayOptions_ReplacementFormat: '- [ ] {{TASK}} {{IMPORTANCE}}',
+	displayOptions_ReplacementFormat: '- [{{STATUS_SYMBOL}}] {{TASK}} {{IMPORTANCE}}',
 
 	displayOptions_TaskImportance_Low: '🔽',
 	displayOptions_TaskImportance_Normal: '🔼',
 	displayOptions_TaskImportance_High: '⏫',
+
+	displayOptions_TaskStatus_NotStarted: ' ',
+	displayOptions_TaskStatus_InProgress: '/',
+	displayOptions_TaskStatus_Completed: 'x',
 
 	todo_OpenUsingApplicationProtocol: true,
 
@@ -229,6 +237,35 @@ export class MsTodoSyncSettingTab extends PluginSettingTab {
 			this.settings.displayOptions_TaskImportance_Low,
 			async (value) => {
 				this.settings.displayOptions_TaskImportance_Low = value;
+			},
+		);
+
+		// Task Status Indicator - Not Started
+		this.addTextSetting(
+			containerEl,
+			'Settings_Todo_Display_Status_NotStartedName',
+			'Settings_Todo_Display_Status_NotStartedDescription',
+			this.settings.displayOptions_TaskStatus_NotStarted,
+			async (value) => {
+				this.settings.displayOptions_TaskStatus_NotStarted = value;
+			},
+		);
+		this.addTextSetting(
+			containerEl,
+			'Settings_Todo_Display_Status_InProgressName',
+			'Settings_Todo_Display_Status_InProgressDescription',
+			this.settings.displayOptions_TaskStatus_InProgress,
+			async (value) => {
+				this.settings.displayOptions_TaskStatus_InProgress = value;
+			},
+		);
+		this.addTextSetting(
+			containerEl,
+			'Settings_Todo_Display_Status_CompletedName',
+			'Settings_Todo_Display_Status_CompletedDescription',
+			this.settings.displayOptions_TaskStatus_Completed,
+			async (value) => {
+				this.settings.displayOptions_TaskStatus_Completed = value;
 			},
 		);
 

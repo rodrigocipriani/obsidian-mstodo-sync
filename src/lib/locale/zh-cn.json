@@ -26,6 +26,9 @@
 	"EditorMenu_SyncToTodoAndReplace": "同步到微软待办并替换",
 	"PluginTitle": "Microsoft To Do Sync",
 	"PluginDescription": "一个可以同步微软Todo的obsidian插件",
+	"CommandNotice_NothingSelected": "好像没有选中什么",
+	"CommandNotice_SetListName": "请先设置同步列表",
+	"CommandNotice_CreatingToDo": "创建待办中...",
 	"Settings_Todo_DefaultListName": "默认的同步微软Todo列表名称",
 	"Settings_Todo_DefaultListNameDescription": "如不存在则以该名称创建列表",
 	"Settings_Uptimer": "Uptimer设置",
@@ -56,5 +59,13 @@
 	"Settings_Todo_Display_Importance_NormalName": "Medium Priority Indicator",
 	"Settings_Todo_Display_Importance_NormalDescription": "Used to display and create/update To Do items if found on line.",
 	"Settings_Todo_Display_Importance_LowName": "Low Priority Indicator",
-	"Settings_Todo_Display_Importance_LowDescription": "Used to display and create/update To Do items if found on line."
+	"Settings_Todo_Display_Importance_LowDescription": "Used to display and create/update To Do items if found on line.",
+	"Auth_Heading_VerificationRequiredForFirstUse": "Microsoft verification is required for first use",
+	"Auth_Text_CodeCopiedClipboard": "The device code has been copied to the clipboard, please click the link below to verify",
+	"Settings_Todo_Display_Status_NotStartedName": "Not Started Status Indicator",
+	"Settings_Todo_Display_Status_NotStartedDescription": "Used between the square brackets in markdown.",
+	"Settings_Todo_Display_Status_InProgressName": "In Progress Status Indicator",
+	"Settings_Todo_Display_Status_InProgressDescription": "Used between the square brackets in markdown.",
+	"Settings_Todo_Display_Status_CompletedName": "Completed Status Indicator",
+	"Settings_Todo_Display_Status_CompletedDescription": "Used between the square brackets in markdown."
 }

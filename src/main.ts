@@ -1,7 +1,7 @@
 import { Editor, MarkdownView, Plugin } from 'obsidian';
 import { TodoApi } from './api/todoApi';
 import { DEFAULT_SETTINGS, MsTodoSyncSettingTab, MsTodoSyncSettings } from './gui/msTodoSyncSettingTab';
-import { createTodayTasks, getTaskIdFromLine, postTask } from './command/msTodoCommand';
+import { createTodayTasks, getTaskIdFromLine, postTask, postTaskAndChildren } from './command/msTodoCommand';
 import { t } from './lib/lang';
 import { log, logging } from './lib/logging';
 
@@ -42,6 +42,24 @@ export default class MsTodoSync extends Plugin {
 					item.setTitle(t('EditorMenu_SyncToTodoAndReplace')).onClick(
 						async () =>
 							await postTask(
+								this.todoApi,
+								this.settings.todoListSync?.listId,
+								editor,
+								this.app.workspace.getActiveFile()?.basename,
+								this,
+								true,
+							),
+					);
+				});
+			}),
+		);
+
+		this.registerEvent(
+			this.app.workspace.on('editor-menu', (menu, editor, view) => {
+				menu.addItem((item) => {
+					item.setTitle('Sync Task with details').onClick(
+						async () =>
+							await postTaskAndChildren(
 								this.todoApi,
 								this.settings.todoListSync?.listId,
 								editor,
