@@ -178,7 +178,6 @@ export class ObsidianTodoTask implements TodoTask {
 		output = format
 			.replace(TASK_REGEX, this.title?.trim() ?? '')
 			.replace(STATUS_SYMBOL_REGEX, this.getStatusIndicator());
-		this.logger.debug(`output: '${output}'`);
 
 		if (output.includes(priorityIndicator)) {
 			// Already in title, don't add it again and clear replacement tag.
@@ -186,13 +185,12 @@ export class ObsidianTodoTask implements TodoTask {
 		} else {
 			output = output.replace(IMPORTANCE_REGEX, priorityIndicator);
 		}
-		this.logger.debug(`output: '${output}'`);
 
 		// Append blocklink at the end if it exists
 		if (this.hasBlockLink && this.blockLink) {
 			output = `${output.trim()} ^${this.blockLink}`;
 		}
-		this.logger.debug(`output: '${output}'`);
+		this.logger.debug(`Updated task: '${output}'`);
 
 		let formattedBody = '';
 		let formattedChecklist = '';
@@ -205,7 +203,7 @@ export class ObsidianTodoTask implements TodoTask {
 				}
 			});
 		}
-		this.logger.debug(`formattedBody: '${formattedBody}'`);
+		// this.logger.debug(`formattedBody: '${formattedBody}'`);
 
 		if (this.checklistItems && this.checklistItems.length > 0) {
 			this.checklistItems.forEach((item) => {
@@ -216,11 +214,11 @@ export class ObsidianTodoTask implements TodoTask {
 				}
 			});
 		}
-		this.logger.debug(`formattedChecklist: '${formattedChecklist}'`);
+		// this.logger.debug(`formattedChecklist: '${formattedChecklist}'`);
 
 		output = `${output.trim()}\n${formattedBody}${formattedChecklist}`;
 
-		this.logger.debug(`output: '${output}'`);
+		// this.logger.debug(`output: '${output}'`);
 
 		return output;
 	}

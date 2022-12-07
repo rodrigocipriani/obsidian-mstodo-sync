@@ -158,7 +158,7 @@ export async function postTaskAndChildren(
 	logger.debug(`updated: ${todo.title}`, todo);
 
 	if (todo.hasBlockLink && todo.id) {
-		logger.debug(`Updating Task: ${todo.title}`);
+		logger.debug(`Updating Task: ${todo.title}`, todo.getTodoTask());
 
 		//const currentTaskState = await todoApi.getTask(listId, todo.id);
 		let returnedTask;
@@ -178,7 +178,7 @@ export async function postTaskAndChildren(
 		}
 
 		logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
-		logger.debug(`updated: ${returnedTask?.id}`);
+		logger.debug(`updated: ${returnedTask?.id}`, returnedTask);
 	} else {
 		logger.debug(`Creating Task: ${todo.title}`);
 
