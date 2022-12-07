@@ -1,4 +1,4 @@
-import { Editor, Notice } from 'obsidian';
+import { Editor, EditorPosition, Notice } from 'obsidian';
 import { ObsidianTodoTask } from 'src/model/ObsidianTodoTask';
 import MsTodoSync from '../main';
 import { TodoApi } from '../api/todoApi';
@@ -62,7 +62,7 @@ export async function postTask(
 				const returnedTask = await todoApi.createTaskFromToDo(listId, todo.getTodoTask());
 
 				todo.status = returnedTask.status;
-				todo.cacheTaskId(returnedTask.id);
+				todo.cacheTaskId(returnedTask.id ?? '');
 				logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`, todo);
 			}
 
@@ -105,7 +105,7 @@ export async function postTaskAndChildren(
 	editor: Editor,
 	fileName: string | undefined,
 	plugin: MsTodoSync,
-	replace?: boolean,
+	push = true,
 ) {
 	const logger = logging.getLogger('mstodo-sync.command.post');
 
@@ -118,30 +118,35 @@ export async function postTaskAndChildren(
 	const cursorLocation = editor.getCursor();
 	const topLevelTask = editor.getLine(cursorLocation.line);
 	logger.debug(`topLevelTask: ${topLevelTask}`);
-	logger.debug(`cursorLocation: ${cursorLocation.line}`, cursorLocation);
+	// logger.debug(`cursorLocation: ${cursorLocation.line}`, cursorLocation);
 
 	let body = '';
 	const childTasks: string[] = [];
 
+	// Get all lines including the line the cursor is on.
 	const lines = editor.getValue().split('\n').slice(cursorLocation.line);
-	logger.debug(`editor: ${cursorLocation}`, lines);
+	// logger.debug(`editor: ${cursorLocation}`, lines);
 
-	const endLine = lines.findIndex((line, index) => !/[ ]{2,}- \[(.)\]/.test(line) && !line.startsWith('  '));
+	// Find the end of section which a blank line or a line that is not indented by two spaces.
+	const endLine = lines.findIndex(
+		//(line, index) => !/[ ]{2,}- \[(.)\]/.test(line) && !line.startsWith('  ') && index > 0,
+		(line, index) => line.length == 0 && index > 0,
+	);
 	logger.debug(`endLine: ${endLine}`);
 
-	lines.slice(cursorLocation.line, endLine).forEach((line, index) => {
+	// Scan lines below task for sub tasks and body.
+	lines.slice(1, endLine).forEach((line, index) => {
+		// logger.debug(`processing line: ${index} -- ${line}`);
+
 		if (line.startsWith('  - [')) {
-			childTasks.push(
-				line
-					.trim()
-					.replace(/[ ]{2,}- \[(.)\]/, '')
-					.trim(),
-			);
+			childTasks.push(line.trim());
 		} else {
-			body += line + '\n';
+			// remove the two spaces at the beginning of the line, will be added back on sync.
+			// on sync the body will be indented by two spaces and the tasks will be appended at this point.
+			body += line.trim() + '\n';
 		}
 	});
-	logger.debug(`endLine: ${body}`);
+	logger.debug(`body: ${body}`);
 	logger.debug(`childTasks: ${childTasks}`, childTasks);
 
 	const todo = new ObsidianTodoTask(plugin, topLevelTask, fileName ?? '');
@@ -151,67 +156,58 @@ export async function postTaskAndChildren(
 	});
 
 	logger.debug(`updated: ${todo.title}`, todo);
-	return;
+
 	if (todo.hasBlockLink && todo.id) {
 		logger.debug(`Updating Task: ${todo.title}`);
 
-		const returnedTask = await todoApi.updateTaskFromToDo(listId, todo.id, todo.getTodoTask());
+		//const currentTaskState = await todoApi.getTask(listId, todo.id);
+		let returnedTask;
+		if (push) {
+			returnedTask = await todoApi.updateTaskFromToDo(listId, todo.id, todo.getTodoTask());
+			// TODO Push the checklist items...
+			todo.checklistItems = returnedTask.checklistItems;
+			todo.status = returnedTask.status;
+			todo.body = returnedTask.body;
+		} else {
+			returnedTask = await todoApi.getTask(listId, todo.id);
+			if (returnedTask) {
+				todo.checklistItems = returnedTask.checklistItems;
+				todo.status = returnedTask.status;
+				todo.body = returnedTask.body;
+			}
+		}
+
 		logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
-		logger.debug(`updated: ${returnedTask.id}`);
+		logger.debug(`updated: ${returnedTask?.id}`);
 	} else {
 		logger.debug(`Creating Task: ${todo.title}`);
 
-		const returnedTask = await todoApi.createTaskFromToDo(listId, todo.getTodoTask());
+		const returnedTask = await todoApi.createTaskFromToDo(listId, todo.getTodoTask(true));
 
 		todo.status = returnedTask.status;
-		todo.cacheTaskId(returnedTask.id);
+		todo.cacheTaskId(returnedTask.id ?? '');
 		logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`, todo);
 	}
 
-	const formatted = editor
-		.getSelection()
-		.replace(/\*|^> |^#* |- /gm, '')
-		// .replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
-		.split('\n')
-		.filter((s) => s != '');
-	log('debug', formatted.join(' :: '));
-	Promise.all(
-		formatted.map(async (s) => {
-			const todo = new ObsidianTodoTask(plugin, s, fileName ?? '');
+	// Update the task on the page.
+	const start = getLineStartPos(cursorLocation.line);
+	const end = getLineEndPos(cursorLocation.line + endLine, editor);
 
-			// If there is a block link in the line, we will try to find
-			// the task id from the block link and update the task instead.
-			if (todo.hasBlockLink && todo.id) {
-				logger.debug(`Updating Task: ${todo.title}`);
+	editor.replaceRange(todo.getMarkdownTask(), start, end);
+}
 
-				const returnedTask = await todoApi.updateTaskFromToDo(listId, todo.id, todo.getTodoTask());
-				logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
-				logger.debug(`updated: ${returnedTask.id}`);
-			} else {
-				logger.debug(`Creating Task: ${todo.title}`);
+function getLineStartPos(line: number): EditorPosition {
+	return {
+		line,
+		ch: 0,
+	};
+}
 
-				const returnedTask = await todoApi.createTaskFromToDo(listId, todo.getTodoTask());
-
-				todo.status = returnedTask.status;
-				todo.cacheTaskId(returnedTask.id);
-				logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`, todo);
-			}
-
-			return todo;
-		}),
-	).then((res) => {
-		new Notice('创建待办成功√');
-		if (replace) {
-			editor.replaceSelection(
-				res
-					.map((i) => {
-						logger.debug('Processed blockLink', i.blockLink);
-						return i.getMarkdownTask();
-					})
-					.join('\n'),
-			);
-		}
-	});
+function getLineEndPos(line: number, editor: Editor): EditorPosition {
+	return {
+		line,
+		ch: editor.getLine(line).length,
+	};
 }
 
 export async function createTodayTasks(todoApi: TodoApi, settings: MsTodoSyncSettings, editor?: Editor) {

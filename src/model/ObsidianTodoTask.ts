@@ -19,7 +19,7 @@ import { logging } from './../lib/logging';
 import { IMPORTANCE_REGEX, STATUS_SYMBOL_REGEX, TASK_REGEX } from './../constants';
 
 export class ObsidianTodoTask implements TodoTask {
-	id?: string;
+	id: string;
 
 	// The task body that typically contains information about the task.
 	public body?: NullableOption<ItemBody>;
@@ -90,8 +90,9 @@ export class ObsidianTodoTask implements TodoTask {
 		this.settings = plugin.settings;
 		this.fileName = fileName;
 
-		this.title = line.trim();
 		this.logger.debug(`Creating: '${this.title}'`);
+
+		this.title = line.trim();
 
 		// This will strip out the block link if it exists as
 		// it is part of this plugin and not user specified.
@@ -102,6 +103,11 @@ export class ObsidianTodoTask implements TodoTask {
 
 		this.checkForImportance(line);
 
+		this.title = this.title
+			.trim()
+			.replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
+			.trim();
+
 		this.body = {
 			content: `${t('displayOptions_CreatedInFile')} [[${this.fileName}]]`,
 			contentType: 'text',
@@ -110,7 +116,7 @@ export class ObsidianTodoTask implements TodoTask {
 		this.logger.debug(`Created: '${this.title}'`);
 	}
 
-	public getTodoTask(): TodoTask {
+	public getTodoTask(withChecklist = false): TodoTask {
 		const toDo: TodoTask = {
 			title: this.title,
 		};
@@ -127,8 +133,10 @@ export class ObsidianTodoTask implements TodoTask {
 			toDo.importance = this.importance as Importance;
 		}
 
-		if (this.checklistItems && this.checklistItems.length > 0) {
-			toDo.checklistItems = this.checklistItems;
+		if (withChecklist) {
+			if (this.checklistItems && this.checklistItems.length > 0) {
+				toDo.checklistItems = this.checklistItems;
+			}
 		}
 		return toDo;
 	}
@@ -146,7 +154,10 @@ export class ObsidianTodoTask implements TodoTask {
 		}
 
 		this.checklistItems.push({
-			displayName: item,
+			displayName: item
+				.trim()
+				.replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
+				.trim(),
 		});
 	}
 
@@ -158,11 +169,16 @@ export class ObsidianTodoTask implements TodoTask {
 	 */
 	public getMarkdownTask(): string {
 		let output: string;
+
+		// Format and display the task which is the first line.
 		const format = this.settings.displayOptions_ReplacementFormat;
 		const priorityIndicator = this.getPriorityIndicator();
 
 		// eslint-disable-next-line prefer-const
-		output = format.replace(TASK_REGEX, this.title ?? '').replace(STATUS_SYMBOL_REGEX, this.getStatusIndicator());
+		output = format
+			.replace(TASK_REGEX, this.title?.trim() ?? '')
+			.replace(STATUS_SYMBOL_REGEX, this.getStatusIndicator());
+		this.logger.debug(`output: '${output}'`);
 
 		if (output.includes(priorityIndicator)) {
 			// Already in title, don't add it again and clear replacement tag.
@@ -170,17 +186,41 @@ export class ObsidianTodoTask implements TodoTask {
 		} else {
 			output = output.replace(IMPORTANCE_REGEX, priorityIndicator);
 		}
-
-		if (this.settings.displayOptions_ReplaceAddCreatedAt) {
-			output = `${output} ${t('displayOptions_CreatedAtTime')} ${window
-				.moment()
-				.format(this.settings.displayOptions_TimeFormat)}`;
-		}
+		this.logger.debug(`output: '${output}'`);
 
 		// Append blocklink at the end if it exists
 		if (this.hasBlockLink && this.blockLink) {
 			output = `${output.trim()} ^${this.blockLink}`;
 		}
+		this.logger.debug(`output: '${output}'`);
+
+		let formattedBody = '';
+		let formattedChecklist = '';
+
+		// Add in the body if it exists and indented by two spaces.
+		if (this.body?.content && this.body.content.length > 0) {
+			this.body?.content.split('\n').forEach((bodyLine) => {
+				if (bodyLine.trim().length > 0) {
+					formattedBody += '  ' + bodyLine + '\n';
+				}
+			});
+		}
+		this.logger.debug(`formattedBody: '${formattedBody}'`);
+
+		if (this.checklistItems && this.checklistItems.length > 0) {
+			this.checklistItems.forEach((item) => {
+				if (item.isChecked) {
+					formattedChecklist += '  - [x] ' + item.displayName + '\n';
+				} else {
+					formattedChecklist += '  - [ ] ' + item.displayName + '\n';
+				}
+			});
+		}
+		this.logger.debug(`formattedChecklist: '${formattedChecklist}'`);
+
+		output = `${output.trim()}\n${formattedBody}${formattedChecklist}`;
+
+		this.logger.debug(`output: '${output}'`);
 
 		return output;
 	}
@@ -266,7 +306,7 @@ export class ObsidianTodoTask implements TodoTask {
 	 * @return {*}  {Promise<void>}
 	 * @memberof ObsidianTodoTask
 	 */
-	public async cacheTaskId(id?: string): Promise<void> {
+	public async cacheTaskId(id: string): Promise<void> {
 		this.settings.taskIdIndex = this.settings.taskIdIndex + 1;
 
 		const index = `${Math.random().toString(20).substring(2, 6)}${this.settings.taskIdIndex

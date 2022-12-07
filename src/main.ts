@@ -57,7 +57,7 @@ export default class MsTodoSync extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on('editor-menu', (menu, editor, view) => {
 				menu.addItem((item) => {
-					item.setTitle('Sync Task with details').onClick(
+					item.setTitle('Sync Task with details (Push)').onClick(
 						async () =>
 							await postTaskAndChildren(
 								this.todoApi,
@@ -66,6 +66,24 @@ export default class MsTodoSync extends Plugin {
 								this.app.workspace.getActiveFile()?.basename,
 								this,
 								true,
+							),
+					);
+				});
+			}),
+		);
+
+		this.registerEvent(
+			this.app.workspace.on('editor-menu', (menu, editor, view) => {
+				menu.addItem((item) => {
+					item.setTitle('Sync Task with details (Pull)').onClick(
+						async () =>
+							await postTaskAndChildren(
+								this.todoApi,
+								this.settings.todoListSync?.listId,
+								editor,
+								this.app.workspace.getActiveFile()?.basename,
+								this,
+								false,
 							),
 					);
 				});
