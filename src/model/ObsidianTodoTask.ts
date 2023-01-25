@@ -13,6 +13,7 @@ import {
 	TodoTask,
 } from '@microsoft/microsoft-graph-types';
 import { MsTodoSyncSettings } from 'src/gui/msTodoSyncSettingTab';
+import { CachedMetadata } from 'obsidian';
 import MsTodoSync from './../main';
 import { t } from './../lib/lang';
 import { logging } from './../lib/logging';
@@ -81,39 +82,87 @@ export class ObsidianTodoTask implements TodoTask {
 	private plugin: MsTodoSync;
 	private settings: MsTodoSyncSettings;
 	logger = logging.getLogger('mstodo-sync.ObsidianTodoTask');
+	private originalTitle: string;
 
 	/**
 	 *
 	 */
-	constructor(plugin: MsTodoSync, line: string, fileName: string) {
-		this.plugin = plugin;
-		this.settings = plugin.settings;
-		this.fileName = fileName;
+	constructor() {
+		// this.plugin = plugin;
+		// this.settings = plugin.settings;
+		// this.fileName = fileName;
+		// this.originalTitle = line;
+		// this.logger.debug(`Creating: '${this.title}'`);
+		// this.title = line.trim();
+		// // This will strip out the block link if it exists as
+		// // it is part of this plugin and not user specified.
+		// this.checkForBlockLink(line);
+		// // This will strip out the checkbox if in title.
+		// this.checkForStatus(line);
+		// this.checkForImportance(line);
+		// this.title = this.title
+		// 	.trim()
+		// 	.replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
+		// 	.trim();
+		// this.body = {
+		// 	content: `${t('displayOptions_CreatedInFile')} [[${this.fileName}]]`,
+		// 	contentType: 'text',
+		// };
+		// this.logger.debug(`Created: '${this.title}'`);
+	}
+	// constructor(plugin: MsTodoSync, line: string, fileName: string) {
+	// 	this.plugin = plugin;
+	// 	this.settings = plugin.settings;
+	// 	this.fileName = fileName;
+	// 	this.originalTitle = line;
 
-		this.logger.debug(`Creating: '${this.title}'`);
+	// 	this.logger.debug(`Creating: '${this.title}'`);
 
-		this.title = line.trim();
+	// 	this.title = line.trim();
 
-		// This will strip out the block link if it exists as
-		// it is part of this plugin and not user specified.
-		this.checkForBlockLink(line);
+	// 	// This will strip out the block link if it exists as
+	// 	// it is part of this plugin and not user specified.
+	// 	this.checkForBlockLink(line);
 
-		// This will strip out the checkbox if in title.
-		this.checkForStatus(line);
+	// 	// This will strip out the checkbox if in title.
+	// 	this.checkForStatus(line);
 
-		this.checkForImportance(line);
+	// 	this.checkForImportance(line);
 
-		this.title = this.title
-			.trim()
-			.replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
-			.trim();
+	// 	this.title = this.title
+	// 		.trim()
+	// 		.replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
+	// 		.trim();
 
-		this.body = {
-			content: `${t('displayOptions_CreatedInFile')} [[${this.fileName}]]`,
-			contentType: 'text',
-		};
+	// 	this.body = {
+	// 		content: `${t('displayOptions_CreatedInFile')} [[${this.fileName}]]`,
+	// 		contentType: 'text',
+	// 	};
 
-		this.logger.debug(`Created: '${this.title}'`);
+	// 	this.logger.debug(`Created: '${this.title}'`);
+	// }
+
+	static async fromLineNumber(plugin: MsTodoSync, fileName: string, lineNumber: number): Promise<ObsidianTodoTask> {
+		const task = new ObsidianTodoTask();
+
+		task.plugin = plugin;
+		task.settings = plugin.settings;
+		task.fileName = fileName;
+
+		const pageMetadata = plugin.getPageMetadata(fileName) as CachedMetadata;
+
+		await app.vault.read(app.vault.getAbstractFileByPath('400 Reference/HomeTech/Unraid.md'));
+
+		app.vault.read(this.config.target_file);
+
+		plugin.app.vault.getAbstractFileByPath;
+		pageMetadata.listItems?.find((item) => {
+			if (item.position.start.line === lineNumber) {
+				task.originalTitle = item.line;
+			}
+		});
+
+		return task;
 	}
 
 	public getTodoTask(withChecklist = false): TodoTask {

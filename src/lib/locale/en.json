@@ -67,5 +67,8 @@
 	"Settings_Todo_Display_Status_InProgressName": "In Progress Status Indicator",
 	"Settings_Todo_Display_Status_InProgressDescription": "Used between the square brackets in markdown.",
 	"Settings_Todo_Display_Status_CompletedName": "Completed Status Indicator",
-	"Settings_Todo_Display_Status_CompletedDescription": "Used between the square brackets in markdown."
+	"Settings_Todo_Display_Status_CompletedDescription": "Used between the square brackets in markdown.",
+	"Notice_UnableToAcquireTaskFromConfiguredList": "Unable to acquire task from configured list, check to see it exists and has not been deleted",
+	"Notice_DeviceCodeOnClipboard": "The device code has been copied to the clipboard, please enter it in the browser interface that opens",
+	"Notice_DeviceCodeCopiedToClipboard": "The device code has been copied to the clipboard"
 }

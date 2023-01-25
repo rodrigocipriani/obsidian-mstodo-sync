@@ -67,5 +67,8 @@
 	"Settings_Todo_Display_Status_InProgressName": "In Progress Status Indicator",
 	"Settings_Todo_Display_Status_InProgressDescription": "Used between the square brackets in markdown.",
 	"Settings_Todo_Display_Status_CompletedName": "Completed Status Indicator",
-	"Settings_Todo_Display_Status_CompletedDescription": "Used between the square brackets in markdown."
+	"Settings_Todo_Display_Status_CompletedDescription": "Used between the square brackets in markdown.",
+	"Notice_UnableToAcquireTaskFromConfiguredList": "获取失败，请检查同步列表是否已删除",
+	"Notice_DeviceCodeOnClipboard": "设备代码已复制到剪贴板,请在打开的浏览器界面输入",
+	"Notice_DeviceCodeCopiedToClipboard": "设备代码已复制到剪贴板"
 }

@@ -1,4 +1,4 @@
-import { Editor, MarkdownView, Plugin } from 'obsidian';
+import { CachedMetadata, Editor, MarkdownView, Plugin } from 'obsidian';
 import { TodoApi } from './api/todoApi';
 import { DEFAULT_SETTINGS, MsTodoSyncSettingTab, MsTodoSyncSettings } from './gui/msTodoSyncSettingTab';
 import { createTodayTasks, getTaskIdFromLine, postTask, postTaskAndChildren } from './command/msTodoCommand';
@@ -8,6 +8,11 @@ import { log, logging } from './lib/logging';
 export default class MsTodoSync extends Plugin {
 	settings: MsTodoSyncSettings;
 	public todoApi: TodoApi;
+
+	// Pulls the meta data for the a page to help with list processing.
+	getPageMetadata(path: string): CachedMetadata | null {
+		return this.app.metadataCache.getCache(path);
+	}
 
 	async onload() {
 		logging.registerConsoleLogger();
