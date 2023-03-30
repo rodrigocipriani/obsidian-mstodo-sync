@@ -87,83 +87,92 @@ export class ObsidianTodoTask implements TodoTask {
 	/**
 	 *
 	 */
-	constructor() {
-		// this.plugin = plugin;
-		// this.settings = plugin.settings;
-		// this.fileName = fileName;
-		// this.originalTitle = line;
-		// this.logger.debug(`Creating: '${this.title}'`);
-		// this.title = line.trim();
-		// // This will strip out the block link if it exists as
-		// // it is part of this plugin and not user specified.
-		// this.checkForBlockLink(line);
-		// // This will strip out the checkbox if in title.
-		// this.checkForStatus(line);
-		// this.checkForImportance(line);
-		// this.title = this.title
-		// 	.trim()
-		// 	.replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
-		// 	.trim();
-		// this.body = {
-		// 	content: `${t('displayOptions_CreatedInFile')} [[${this.fileName}]]`,
-		// 	contentType: 'text',
-		// };
-		// this.logger.debug(`Created: '${this.title}'`);
-	}
-	// constructor(plugin: MsTodoSync, line: string, fileName: string) {
-	// 	this.plugin = plugin;
-	// 	this.settings = plugin.settings;
-	// 	this.fileName = fileName;
-	// 	this.originalTitle = line;
+	//constructor() {
+	// this.plugin = plugin;
+	// this.settings = plugin.settings;
+	// this.fileName = fileName;
+	// this.originalTitle = line;
+	// this.logger.debug(`Creating: '${this.title}'`);
+	// this.title = line.trim();
+	// // This will strip out the block link if it exists as
+	// // it is part of this plugin and not user specified.
+	// this.checkForBlockLink(line);
+	// // This will strip out the checkbox if in title.
+	// this.checkForStatus(line);
+	// this.checkForImportance(line);
+	// this.title = this.title
+	// 	.trim()
+	// 	.replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
+	// 	.trim();
+	// this.body = {
+	// 	content: `${t('displayOptions_CreatedInFile')} [[${this.fileName}]]`,
+	// 	contentType: 'text',
+	// };
+	// this.logger.debug(`Created: '${this.title}'`);
+	//}
+	constructor(plugin: MsTodoSync, line: string, fileName: string) {
+		this.plugin = plugin;
+		this.settings = plugin.settings;
+		this.fileName = fileName;
+		this.originalTitle = line;
 
-	// 	this.logger.debug(`Creating: '${this.title}'`);
+		this.logger.debug(`Creating: '${this.title}'`);
 
-	// 	this.title = line.trim();
+		this.title = line.trim();
 
-	// 	// This will strip out the block link if it exists as
-	// 	// it is part of this plugin and not user specified.
-	// 	this.checkForBlockLink(line);
+		// This will strip out the block link if it exists as
+		// it is part of this plugin and not user specified.
+		this.checkForBlockLink(line);
 
-	// 	// This will strip out the checkbox if in title.
-	// 	this.checkForStatus(line);
+		// This will strip out the checkbox if in title.
+		this.checkForStatus(line);
 
-	// 	this.checkForImportance(line);
+		this.checkForImportance(line);
 
-	// 	this.title = this.title
-	// 		.trim()
-	// 		.replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
-	// 		.trim();
+		this.title = this.title
+			.trim()
+			.replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
+			.trim();
 
-	// 	this.body = {
-	// 		content: `${t('displayOptions_CreatedInFile')} [[${this.fileName}]]`,
-	// 		contentType: 'text',
-	// 	};
+		this.body = {
+			content: `${t('displayOptions_CreatedInFile')} [[${this.fileName}]]`,
+			contentType: 'text',
+		};
 
-	// 	this.logger.debug(`Created: '${this.title}'`);
-	// }
-
-	static async fromLineNumber(plugin: MsTodoSync, fileName: string, lineNumber: number): Promise<ObsidianTodoTask> {
-		const task = new ObsidianTodoTask();
-
-		task.plugin = plugin;
-		task.settings = plugin.settings;
-		task.fileName = fileName;
-
-		const pageMetadata = plugin.getPageMetadata(fileName) as CachedMetadata;
-
-		await app.vault.read(app.vault.getAbstractFileByPath('400 Reference/HomeTech/Unraid.md'));
-
-		app.vault.read(this.config.target_file);
-
-		plugin.app.vault.getAbstractFileByPath;
-		pageMetadata.listItems?.find((item) => {
-			if (item.position.start.line === lineNumber) {
-				task.originalTitle = item.line;
-			}
+		if (!this.linkedResources) {
+			this.linkedResources = [];
+		}
+		this.linkedResources.push({
+			webUrl: `obsidian://advanced-uri?filepath=${fileName}`,
+			applicationName: 'Obsidian',
+			displayName: 'fileName',
 		});
 
-		return task;
+		this.logger.debug(`Created: '${this.title}'`);
 	}
+
+	// static async fromLineNumber(plugin: MsTodoSync, fileName: string, lineNumber: number): Promise<ObsidianTodoTask> {
+	// 	const task = new ObsidianTodoTask();
+
+	// 	task.plugin = plugin;
+	// 	task.settings = plugin.settings;
+	// 	task.fileName = fileName;
+
+	// 	const pageMetadata = plugin.getPageMetadata(fileName) as CachedMetadata;
+
+	// 	await app.vault.read(app.vault.getAbstractFileByPath('400 Reference/HomeTech/Unraid.md'));
+
+	// 	app.vault.read(this.config.target_file);
+
+	// 	plugin.app.vault.getAbstractFileByPath;
+	// 	pageMetadata.listItems?.find((item) => {
+	// 		if (item.position.start.line === lineNumber) {
+	// 			task.originalTitle = item.line;
+	// 		}
+	// 	});
+
+	// 	return task;
+	// }
 
 	public getTodoTask(withChecklist = false): TodoTask {
 		const toDo: TodoTask = {
@@ -186,6 +195,10 @@ export class ObsidianTodoTask implements TodoTask {
 			if (this.checklistItems && this.checklistItems.length > 0) {
 				toDo.checklistItems = this.checklistItems;
 			}
+		}
+
+		if (this.linkedResources && this.linkedResources.length > 0) {
+			toDo.linkedResources = this.linkedResources;
 		}
 		return toDo;
 	}
@@ -216,7 +229,7 @@ export class ObsidianTodoTask implements TodoTask {
 	 * @return {*}  {string}
 	 * @memberof ObsidianTodoTask
 	 */
-	public getMarkdownTask(): string {
+	public getMarkdownTask(singleLine: boolean): string {
 		let output: string;
 
 		// Format and display the task which is the first line.
@@ -265,8 +278,11 @@ export class ObsidianTodoTask implements TodoTask {
 		}
 		// this.logger.debug(`formattedChecklist: '${formattedChecklist}'`);
 
-		output = `${output.trim()}\n${formattedBody}${formattedChecklist}`;
-
+		if (singleLine) {
+			output = `${output.trim()}`;
+		} else {
+			output = `${output.trim()}\n${formattedBody}${formattedChecklist}`;
+		}
 		// this.logger.debug(`output: '${output}'`);
 
 		return output;

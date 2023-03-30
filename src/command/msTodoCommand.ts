@@ -17,6 +17,45 @@ export function getTaskIdFromLine(line: string, plugin: MsTodoSync): string {
 	}
 	return '';
 }
+interface Selection {
+	start: EditorPosition;
+	end?: EditorPosition;
+	lines: number[];
+}
+
+export async function getCurrentLinesFromEditor(editor: Editor): Promise<Selection> {
+	log(
+		'info',
+		`from: ${editor.getCursor('from')}, to: ${editor.getCursor('to')}, anchor: ${editor.getCursor(
+			'anchor',
+		)}, head: ${editor.getCursor('head')}, general: ${editor.getCursor()}`,
+	);
+
+	// const activeFile = this.app.workspace.getActiveFile();
+	// const source = await this.app.vault.read(activeFile);
+
+	let start: EditorPosition;
+	let end: EditorPosition;
+	//let lines: string[] = [];
+	let lines: number[] = [];
+	if (editor.somethingSelected()) {
+		start = editor.getCursor('from');
+		end = editor.getCursor('to');
+		//lines = source.split('\n').slice(start.line, end.line + 1);
+		lines = Array.from({ length: end.line + 1 - start.line }, (v, k) => k + start.line);
+	} else {
+		start = editor.getCursor();
+		end = editor.getCursor();
+		//lines = source.split('\n').slice(start.line, end.line + 1);
+		lines.push(start.line);
+	}
+
+	return {
+		start,
+		end,
+		lines,
+	};
+}
 
 export async function postTask(
 	todoApi: TodoApi,
@@ -28,25 +67,30 @@ export async function postTask(
 ) {
 	const logger = logging.getLogger('mstodo-sync.command.post');
 
-	if (!editor.somethingSelected()) {
-		new Notice(t('CommandNotice_NothingSelected'));
-		return;
-	}
+	// if (!editor.somethingSelected()) {
+	// 	new Notice(t('CommandNotice_NothingSelected'));
+	// 	return;
+	// }
 	if (!listId) {
 		new Notice(t('CommandNotice_SetListName'));
 		return;
 	}
 	new Notice(t('CommandNotice_CreatingToDo'), 3000);
-	const formatted = editor
-		.getSelection()
-		.replace(/\*|^> |^#* |- /gm, '')
-		// .replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
-		.split('\n')
-		.filter((s) => s != '');
-	log('debug', formatted.join(' :: '));
-	Promise.all(
-		formatted.map(async (s) => {
-			const todo = new ObsidianTodoTask(plugin, s, fileName ?? '');
+	// const formatted = editor
+	// 	.getSelection()
+	// 	.replace(/\*|^> |^#* |- /gm, '')
+	// 	// .replace(/(- \[( |x|\/)\] )|\*|^> |^#* |- /gm, '')
+	// 	.split('\n')
+	// 	.filter((s) => s != '');
+	const activeFile = this.app.workspace.getActiveFile();
+	const source = await this.app.vault.read(activeFile);
+	const lines = (await getCurrentLinesFromEditor(editor)).lines;
+
+	const split = source.split('\n');
+	const modifiedPage = await Promise.all(
+		split.map(async (line: string, index: number) => {
+			if (!lines.includes(index)) return line;
+			const todo = new ObsidianTodoTask(plugin, line, fileName ?? '');
 
 			// If there is a block link in the line, we will try to find
 			// the task id from the block link and update the task instead.
@@ -66,21 +110,55 @@ export async function postTask(
 				logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`, todo);
 			}
 
-			return todo;
+			if (replace) {
+				return todo.getMarkdownTask(true);
+			}
+			return line;
 		}),
-	).then((res) => {
-		new Notice('创建待办成功√');
-		if (replace) {
-			editor.replaceSelection(
-				res
-					.map((i) => {
-						logger.debug('Processed blockLink', i.blockLink);
-						return i.getMarkdownTask();
-					})
-					.join('\n'),
-			);
-		}
-	});
+	);
+
+	await this.app.vault.modify(activeFile, modifiedPage.join('\n'));
+
+	//return split.join('\n');
+
+	// log('debug', formatted.join(' :: '));
+	// Promise.all(
+	// 	formatted.map(async (s) => {
+	// 		const todo = new ObsidianTodoTask(plugin, s, fileName ?? '');
+
+	// 		// If there is a block link in the line, we will try to find
+	// 		// the task id from the block link and update the task instead.
+	// 		if (todo.hasBlockLink && todo.id) {
+	// 			logger.debug(`Updating Task: ${todo.title}`);
+
+	// 			const returnedTask = await todoApi.updateTaskFromToDo(listId, todo.id, todo.getTodoTask());
+	// 			logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`);
+	// 			logger.debug(`updated: ${returnedTask.id}`);
+	// 		} else {
+	// 			logger.debug(`Creating Task: ${todo.title}`);
+
+	// 			const returnedTask = await todoApi.createTaskFromToDo(listId, todo.getTodoTask());
+
+	// 			todo.status = returnedTask.status;
+	// 			todo.cacheTaskId(returnedTask.id ?? '');
+	// 			logger.debug(`blocklink: ${todo.blockLink}, taskId: ${todo.id}`, todo);
+	// 		}
+
+	// 		return todo;
+	// 	}),
+	// ).then((res) => {
+	// 	new Notice('创建待办成功√');
+	// 	if (replace) {
+	// 		editor.replaceSelection(
+	// 			res
+	// 				.map((i) => {
+	// 					logger.debug('Processed blockLink', i.blockLink);
+	// 					return i.getMarkdownTask();
+	// 				})
+	// 				.join('\n'),
+	// 		);
+	// 	}
+	// });
 }
 
 // Experimental
@@ -193,7 +271,7 @@ export async function postTaskAndChildren(
 	const start = getLineStartPos(cursorLocation.line);
 	const end = getLineEndPos(cursorLocation.line + endLine, editor);
 
-	editor.replaceRange(todo.getMarkdownTask(), start, end);
+	editor.replaceRange(todo.getMarkdownTask(false), start, end);
 }
 
 function getLineStartPos(line: number): EditorPosition {
